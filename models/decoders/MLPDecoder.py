@@ -237,6 +237,7 @@ class DecoderHead3(nn.Module):
          # 根据 losses 的内容动态创建 conv 层
         for loss_name in self.losses:
             # print(loss_name)
+            setattr(self, f"align_{loss_name}", nn.Conv2d(eval(f"c{loss_name[-1]}_in_channels"), eval(f"c{loss_name[-1]}_in_channels"), kernel_size=1))
             setattr(self, f"conv_{loss_name}", nn.Sequential(
             nn.Conv2d(eval(f"c{loss_name[-1]}_in_channels"), eval(f"c{loss_name[-1]}_in_channels"), kernel_size=3, padding=1),
             nn.ReLU(inplace=True), 
@@ -285,14 +286,18 @@ class DecoderHead3(nn.Module):
         # 根据 losses 的内容动态使用 conv 层
         for loss_name in self.losses:
             # breakpoint()
+            align_layer = getattr(self, f"align_{loss_name}")
             conv_layer = getattr(self, f"conv_{loss_name}")
 
             preds_S = eval(f"c{loss_name[-1]}")
             N, C, H, W = preds_S.shape
             device = preds_S.device
+            # align
+            preds = align_layer(preds_S)
+
             mat = torch.rand((N,1,H,W)).to(device)
-            mat = torch.where(mat>1-self.lambda_mgd, 0, 1).to(device)
-            masked_fea = torch.mul(preds_S, mat)
+            mat = torch.where(mat>self.lambda_mgd, 0, 1).to(device)
+            masked_fea = torch.mul(preds, mat)
             # print("masked_fea", masked_fea.shape)
             # print("masked_fea", masked_fea)
             # print("preds_S", preds_S)

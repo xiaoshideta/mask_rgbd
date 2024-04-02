@@ -177,7 +177,7 @@ with Engine(custom_parser=parser) as engine:
 
     # 创建记录的文件夹和log日志
     if (engine.distributed and (engine.local_rank == 0)) or (not engine.distributed):
-        tb_dir = config.tb_dir + '/{}'.format(time.strftime("%b%d_%d-%H-%M", time.localtime()))
+        tb_dir = config.tb_dir + '/{}'.format(time.strftime("%b%d_%d-%H-%M-%S", time.localtime()))
         generate_tb_dir = config.tb_dir + '/tb'
         tb = SummaryWriter(log_dir=tb_dir)
         engine.link_tb(tb_dir, generate_tb_dir)
@@ -451,10 +451,10 @@ with Engine(custom_parser=parser) as engine:
                         # if (Best_depth_IoU < depth_mIoU):
                         #     Best_depth_IoU = depth_mIoU
                         # save_model(config.checkpoint_dir, epoch, "rgb", Best_rgb_IoU, model)
-                        engine.save_and_link_checkpoint(config.checkpoint_dir,
-                                                        config.log_dir,
-                                                        config.log_dir_link,
-                                                        Best_rgb_IoU, Best_depth_IoU)
+                        # engine.save_and_link_checkpoint(config.checkpoint_dir,
+                        #                                 config.log_dir,
+                        #                                 config.log_dir_link,
+                        #                                 Best_rgb_IoU, Best_depth_IoU)
                         print("save successful!")
                     
                         # save_model(config.checkpoint_dir, epoch, "depth", Best_depth_IoU, model2)

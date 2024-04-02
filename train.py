@@ -451,10 +451,10 @@ with Engine(custom_parser=parser) as engine:
                         # if (Best_depth_IoU < depth_mIoU):
                         #     Best_depth_IoU = depth_mIoU
                         # save_model(config.checkpoint_dir, epoch, "rgb", Best_rgb_IoU, model)
-                        # engine.save_and_link_checkpoint(config.checkpoint_dir,
-                        #                                 config.log_dir,
-                        #                                 config.log_dir_link,
-                        #                                 Best_rgb_IoU, Best_depth_IoU)
+                        engine.save_and_link_checkpoint(config.checkpoint_dir,
+                                                        config.log_dir,
+                                                        config.log_dir_link,
+                                                        Best_rgb_IoU, Best_depth_IoU)
                         print("save successful!")
                     
                         # save_model(config.checkpoint_dir, epoch, "depth", Best_depth_IoU, model2)

@@ -39,35 +39,6 @@ class SegEvaluator(Evaluator):
         hist_tmp, labeled_tmp, correct_tmp = hist_info(config.num_classes, pred, label)
         results_dict = {'hist': hist_tmp, 'labeled': labeled_tmp, 'correct': correct_tmp}
 
-        # if self.save_path is not None:
-        #     ensure_dir(self.save_path)
-        #     ensure_dir(self.save_path+'_color')
-
-        #     fn = name + '.png'
-
-        #     # save colored result
-        #     result_img = Image.fromarray(pred.astype(np.uint8), mode='P')
-        #     class_colors = get_class_colors()
-        #     palette_list = list(np.array(class_colors).flat)
-        #     if len(palette_list) < 768:
-        #         palette_list += [0] * (768 - len(palette_list))
-        #     result_img.putpalette(palette_list)
-        #     result_img.save(os.path.join(self.save_path+'_color', fn))
-
-        #     # save raw result
-        #     cv2.imwrite(os.path.join(self.save_path, fn), pred)
-        #     logger.info('Save the image ' + fn)
-
-        # if self.show_image:
-        #     colors = self.dataset.get_class_colors
-        #     image = img
-        #     clean = np.zeros(label.shape)
-        #     comp_img = show_img(colors, config.background, image, clean,
-        #                         label,
-        #                         pred)
-        #     cv2.imshow('comp_image', comp_img)
-        #     cv2.waitKey(0)
-
         return results_dict
 
     def compute_metric(self, results):
@@ -94,6 +65,9 @@ if __name__ == "__main__":
     parser.add_argument('--show_image', '-s', default=False,
                         action='store_true')
     parser.add_argument('--save_path', '-p', default=None)
+    parser.add_argument('--lambda_mask', type=float, default=0.75, help='Description of new argument')
+    parser.add_argument('--decode_init', type=int, default=0, help='Description of new argument')
+    parser.add_argument('--losses', nargs='+', default=['loss1','loss2','loss3','loss4'], help='Names of the losses to be used')
 
     args = parser.parse_args()
     device = str(0)
@@ -103,7 +77,9 @@ if __name__ == "__main__":
     # print(args.devices)
     # config.backbone = 'single_mit_b4'
     print(config.backbone)
-    network = segmodel(cfg=config, criterion=None, norm_layer=nn.BatchNorm2d, load=True , decode_init=0)
+    # network = segmodel(cfg=config, criterion=None, norm_layer=nn.BatchNorm2d, load=True)
+    network = segmodel(cfg=config, criterion=None, norm_layer=nn.BatchNorm2d, load=True , decode_init=0, losses=args.losses, lambda_mask=args.lambda_mask)
+    # network = segmodel2(cfg=config, criterion=None, norm_layer=nn.BatchNorm2d, load=True)
     # print(network)
     breakpoint()
     data_setting = {'rgb_root': config.rgb_root_folder,
@@ -127,5 +103,7 @@ if __name__ == "__main__":
                                  config.eval_scale_array, config.eval_flip,
                                  all_dev, args.verbose, args.save_path,
                                  args.show_image)
-        rgb_mIoU = segmentor.run(config.checkpoint_dir, args.epochs, config.val_log_file, config.link_val_log_file, None, "rgb")
+        rgb_mIoU = segmentor.run(config.checkpoint_dir, args.epochs, config.val_log_file, config.link_val_log_file, None, "rgbd")
+        # rgb_mIoU = segmentor.run(config.checkpoint_dir, args.epochs, config.val_log_file, config.link_val_log_file, None, "rgb")
+        # rgb_mIoU = segmentor.run(config.checkpoint_dir, args.epochs, config.val_log_file, config.link_val_log_file, None, "depth")
         print('rgb_mIoU: %.3f%%' % (rgb_mIoU))

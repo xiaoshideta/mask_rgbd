@@ -1,1 +1,0 @@
-CUDA_VISIBLE_DEVICES=6,7 python -m torch.distributed.launch --nproc_per_node=2 train.py --port=29516 --distillation_alpha=0.01 --distillation_flag=1 --lambda_mask=0.75 --losse loss1 loss4

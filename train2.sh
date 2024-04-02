@@ -1,1 +1,0 @@
-CUDA_VISIBLE_DEVICES=4,5,6 python -m torch.distributed.launch --nproc_per_node=3 train2.py --port=29516 --distillation_alpha=0.01 --distillation_single2=1 --distillation_flag=1 --decode_init=0

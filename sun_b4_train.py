@@ -11,9 +11,9 @@ import torch.distributed as dist
 import torch.backends.cudnn as cudnn
 from torch.nn.parallel import DistributedDataParallel
 
-# from config import config
-from config2 import config
-from dataloader.dataloader import get_train_loader, ValPre
+from sun_b4_config import config
+# from config2 import config
+from dataloader.dataloader_sun import get_train_loader, ValPre
 from models.builder import EncoderDecoder as segmodel
 from models.builder import EncoderDecoder2 as segmodel2
 from dataloader.RGBXDataset import RGBXDataset
@@ -35,6 +35,8 @@ parser.add_argument('--distillation_single2', type=int, default=0, help='Descrip
 parser.add_argument('--distillation_flag', type=int, default=0, help='Description of new argument')
 
 parser.add_argument('--lambda_mask', type=float, default=0.75, help='Description of new argument')
+
+parser.add_argument('--select', type=str, default='max', help='Description of the string variable')
 
 parser.add_argument('--decode_init', type=int, default=0, help='Description of new argument')
 parser.add_argument('--losses', nargs='+', default=['loss1','loss2','loss3','loss4'], help='Names of the losses to be used')
@@ -207,7 +209,7 @@ with Engine(custom_parser=parser) as engine:
 
     # breakpoint()
     # depth分支
-    config.backbone = 'single_mit_b2'
+    config.backbone = 'single_'+config.backbone
     print(config.backbone)
     model2 = segmodel2(cfg=config, criterion=criterion2, norm_layer=BatchNorm2d2, load=True, decode_init=1)
 
@@ -283,6 +285,7 @@ with Engine(custom_parser=parser) as engine:
     print("distillation_alpha:", args.distillation_alpha)
     print("distillation_beta:", args.distillation_beta)
     print("lambda_mask:", args.lambda_mask)
+    print("select_method:", args.select)
 
     for epoch in range(engine.state.epoch, config.nepochs + 1):
         # if epoch == 400: 
@@ -356,18 +359,29 @@ with Engine(custom_parser=parser) as engine:
                 
                 loss_values[loss_name].append(distill_feature_maps(rgbd_x[num_values], rgb_x[int(loss_name[-1])-1].detach()))
                 num_values = num_values + 1
-            # loss_values['loss1'].append(distill_feature_maps(rgbd_x[0], rgb_x[0].detach()))
-            # loss_values['loss2'].append(distill_feature_maps(rgbd_x[1], rgb_x[1].detach()))
-            # loss_values['loss3'].append(distill_feature_maps(rgbd_x[2], rgb_x[2].detach()))
-            # loss_values['loss4'].append(distill_feature_maps(rgbd_x[3], rgb_x[3].detach()))
-            # print("loss1", loss_values['loss1'])
-            # print("loss2", loss_values['loss2'])
-            # print("loss3", loss_values['loss3'])
-            # print("loss4", loss_values['loss4'])
+
             selected_losses = args.losses
             selected_loss_values = [loss_values[loss_name][-1] for loss_name in selected_losses]
+
+            selected_loss_tensor = torch.stack(selected_loss_values)
             # print("selected_loss", sum(selected_loss_values))
-            feature_loss = (sum(selected_loss_values)) * args.distillation_beta
+            # 计算最大值或最小值
+
+            max_loss_value = torch.max(selected_loss_tensor)
+            min_loss_value = torch.min(selected_loss_tensor)
+            # print("loss_value", max_loss_value)
+
+            # 计算 feature_loss
+            feature_loss = 0
+            for loss_value in selected_loss_values:
+                if args.select == 'max':
+                    feature_loss = torch.where(torch.eq(selected_loss_tensor, max_loss_value), selected_loss_tensor * args.distillation_beta, selected_loss_tensor * 0.0).sum()
+                elif args.select == 'min':
+                    feature_loss = torch.where(torch.eq(selected_loss_tensor, min_loss_value), selected_loss_tensor * args.distillation_beta, selected_loss_tensor * 0.0).sum()
+                else:
+                    feature_loss = 0.0
+            # print("feature_loss", feature_loss)
+
             loss = loss + feature_loss
             # print("selected_loss", middle_loss)
 
@@ -414,6 +428,11 @@ with Engine(custom_parser=parser) as engine:
 
             del loss
             del loss2
+            del feature_loss
+            # del middle_loss
+            del loss_rdkl
+            del max_loss_value
+            del min_loss_value
             pbar.set_description(print_str, refresh=False)
 
         if (engine.distributed and (engine.local_rank == 0)) or (not engine.distributed):

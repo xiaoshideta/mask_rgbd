@@ -7,7 +7,7 @@ from PIL import Image
 import torch
 import torch.nn as nn
 
-from config2 import config
+from nyu_config import config
 from utils.pyt_utils import ensure_dir, link_file, load_model, parse_devices
 from utils.visualize import print_iou, show_img
 from engine.evaluator import Evaluator
@@ -128,5 +128,5 @@ if __name__ == "__main__":
                                  config.eval_scale_array, config.eval_flip,
                                  all_dev, args.verbose, args.save_path,
                                  args.show_image)
-        rgb_mIoU = segmentor.run(config.checkpoint_dir, args.epochs, config.val_log_file, config.link_val_log_file, network, "depth")
+        rgb_mIoU = segmentor.run(config.checkpoint_dir, args.epochs, config.val_log_file, config.link_val_log_file, None, "rgbd")
         print('rgb_mIoU: %.3f%%' % (rgb_mIoU))

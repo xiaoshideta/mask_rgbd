@@ -95,6 +95,7 @@ if __name__ == "__main__":
                         action='store_true')
     parser.add_argument('--save_path', '-p', default=None)
     parser.add_argument('--losses', nargs='+', default=['loss1','loss2','loss3','loss4'], help='Names of the losses to be used')
+    
 
     args = parser.parse_args()
     device = str(0)

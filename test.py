@@ -7,7 +7,7 @@ from PIL import Image
 import torch
 import torch.nn as nn
 
-from nyu_config import config
+from nyu_b4_config import config
 from utils.pyt_utils import ensure_dir, link_file, load_model, parse_devices
 from utils.visualize import print_iou, show_img
 from engine.evaluator import Evaluator

@@ -77,8 +77,8 @@ C.distillation_alpha = 0.01
 """Eval Config"""
 C.eval_iter = 25
 C.eval_stride_rate = 2 / 3
-C.eval_scale_array = [1] # [0.75, 1, 1.25] # 
-C.eval_flip = False # True # 
+C.eval_scale_array = [0.75, 1, 1.25] # 
+C.eval_flip = True # 
 C.eval_crop_size = [480, 640] # [height weight]
 
 """Store Config"""
